@@ -12,4 +12,5 @@ abstract class AuthenticationRemoteDataSource {
   Future<Either<Failure, UserCredential>> confirmVerification(
       String verificationId, String smsCode);
   Future<Either<Failure, void>> signOut();
+  Future<Either<Failure, bool>> checkIsSignedIn();
 }

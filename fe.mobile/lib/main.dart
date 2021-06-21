@@ -29,11 +29,12 @@ class Main extends StatelessWidget {
               debugShowCheckedModeBanner: false,
               home: BlocBuilder<AuthenticationBloc, AuthenticationState>(
                   builder: (context, state) {
-                if (state is SignedOut) {
+                if (state is SignedOut || state is AuthenticationFailed)
                   return SignInPage();
-                } else if (state is WaitingVerificationCode) {
+                else if (state is WaitingVerificationCode)
                   return VerifyPage();
-                }
+                else if (state is PhoneVerificationPending)
+                  return CircularProgressIndicator();
                 return HomePage();
               })));
 }

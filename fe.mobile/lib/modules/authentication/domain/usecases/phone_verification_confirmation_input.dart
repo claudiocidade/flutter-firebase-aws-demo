@@ -1,8 +1,8 @@
 import 'package:mobile/core/usecases/input.dart';
 
-class PhoneVerificationConfirmationInput extends Input {
+class PhoneVerificationConfirmationRequest extends Input {
   final String verificationId;
   final String smsCode;
-  PhoneVerificationConfirmationInput(
+  PhoneVerificationConfirmationRequest(
       {required this.verificationId, required this.smsCode});
 }

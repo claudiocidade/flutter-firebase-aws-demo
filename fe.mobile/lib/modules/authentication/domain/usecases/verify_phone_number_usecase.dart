@@ -6,21 +6,18 @@ import 'package:mobile/modules/authentication/domain/repositories/authentication
 import 'package:mobile/modules/authentication/domain/usecases/phone_verification_input.dart';
 
 class VerifyPhoneNumberUseCase
-    implements IUseCase<void, PhoneVerificationInput> {
+    implements IUseCase<void, PhoneVerificationRequest> {
   final AuthenticationRepository repository;
 
   VerifyPhoneNumberUseCase(this.repository);
 
-  Future<Either<Failure, void>> execute(PhoneVerificationInput input) async {
-    try {
-      return Right(await this.repository.verifyPhoneNumber(
-          input.phoneNumber,
-          input.verificationCompleted,
-          input.verificationFailed,
-          input.codeSent,
-          input.codeAutoRetrievalTimeout));
-    } catch (e) {
-      return Left(ApplicationFailure(message: e.toString()));
-    }
+  Future<Either<Failure, void>> execute(
+      PhoneVerificationRequest request) async {
+    return await this.repository.verifyPhoneNumber(
+        request.phoneNumber,
+        request.verificationCompleted,
+        request.verificationFailed,
+        request.codeSent,
+        request.codeAutoRetrievalTimeout);
   }
 }

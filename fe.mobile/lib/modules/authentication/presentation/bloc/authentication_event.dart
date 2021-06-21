@@ -20,8 +20,8 @@ class OnPhoneVerificationCompleted extends AuthenticationEvent {
 }
 
 class OnPhoneVerificationFailed extends AuthenticationEvent {
-  final FirebaseAuthException exception;
-  OnPhoneVerificationFailed({required this.exception});
+  final String message;
+  OnPhoneVerificationFailed({required this.message});
 }
 
 class OnPhoneVerificationCodeSent extends AuthenticationEvent {

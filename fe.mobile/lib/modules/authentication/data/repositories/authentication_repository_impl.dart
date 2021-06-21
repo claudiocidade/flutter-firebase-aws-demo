@@ -35,6 +35,11 @@ class AuthenticationRepositoryImpl implements AuthenticationRepository {
 
   @override
   Future<Either<Failure, void>> signOut() async {
-    return await this.signOut();
+    return await this.remoteDataSource.signOut();
+  }
+
+  @override
+  Future<Either<Failure, bool>> checkIsSignedIn() async {
+    return await this.remoteDataSource.checkIsSignedIn();
   }
 }

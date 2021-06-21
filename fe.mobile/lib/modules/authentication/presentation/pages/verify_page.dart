@@ -22,6 +22,7 @@ class VerifyPage extends StatelessWidget {
                   children: [
                     Text('Enter the 6-digits Pin Code'),
                     PinCodeTextField(
+                        autoFocus: true,
                         controller: controller,
                         appContext: context,
                         length: 6,
@@ -29,8 +30,7 @@ class VerifyPage extends StatelessWidget {
                     ElevatedButton(
                         child: Text('CONFIRM'),
                         onPressed: () {
-                          print(
-                              "Submitting verification code ${(state as WaitingVerificationCode).verificationId}");
+                          (state as WaitingVerificationCode);
                           BlocProvider.of<AuthenticationBloc>(context).add(
                               OnPhoneVerificationSubmitted(
                                   verificationId: state.verificationId,
@@ -38,10 +38,9 @@ class VerifyPage extends StatelessWidget {
                         }),
                     ElevatedButton(
                       child: Text('CANCEL'),
-                      onPressed: () {
-                        BlocProvider.of<AuthenticationBloc>(context)
-                            .add(OnSignOutRequested());
-                      },
+                      onPressed: () =>
+                          BlocProvider.of<AuthenticationBloc>(context)
+                              .add(OnSignOutRequested()),
                     )
                   ])));
     });

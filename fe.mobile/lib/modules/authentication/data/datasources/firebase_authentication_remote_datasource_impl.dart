@@ -12,6 +12,8 @@ class FirebaseAuthRemoteDataSourceImpl
       PhoneVerificationFailed verificationFailed,
       PhoneCodeSent codeSent,
       PhoneCodeAutoRetrievalTimeout codeAutoRetrievalTimeout) async {
+    if (FirebaseAuth.instance.currentUser != null) {}
+
     return Right(await FirebaseAuth.instance.verifyPhoneNumber(
         phoneNumber: phoneNumber,
         timeout: Duration(seconds: 120), // TODO: Refactor
@@ -29,11 +31,22 @@ class FirebaseAuthRemoteDataSourceImpl
       return Right(
           await FirebaseAuth.instance.signInWithCredential(credential));
     } on FirebaseAuthException catch (e) {
-      return Left(AuthenticationFailure(exception: e));
+      return Left(UnhandledAuthenticationFailure(exception: e));
     }
   }
 
   Future<Either<Failure, void>> signOut() async {
     return Right(await FirebaseAuth.instance.signOut());
+  }
+
+  @override
+  Future<Either<Failure, bool>> checkIsSignedIn() async {
+    try {
+      return FirebaseAuth.instance.currentUser != null
+          ? Right(true)
+          : Right(false);
+    } on FirebaseAuthException catch (e) {
+      return Left(UnhandledAuthenticationFailure(exception: e));
+    }
   }
 }

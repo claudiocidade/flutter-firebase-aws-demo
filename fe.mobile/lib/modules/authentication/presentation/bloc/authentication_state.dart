@@ -4,6 +4,8 @@ abstract class AuthenticationState {}
 
 class SignedOut extends AuthenticationState {}
 
+class PhoneVerificationPending extends AuthenticationState {}
+
 class AuthenticationCanceled extends AuthenticationState {}
 
 abstract class PhoneAuthenticationState extends AuthenticationState {

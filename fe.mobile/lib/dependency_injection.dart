@@ -1,4 +1,5 @@
 import 'package:get_it/get_it.dart';
+import 'package:mobile/modules/authentication/domain/usecases/check_is_signed_in_usecase.dart';
 import 'package:mobile/modules/authentication/presentation/bloc/authentication_bloc.dart';
 import 'package:mobile/modules/authentication/domain/usecases/verify_phone_number_usecase.dart';
 import 'package:mobile/modules/authentication/domain/usecases/confirm_verification_usecase.dart';
@@ -11,7 +12,9 @@ final sl = GetIt.instance;
 
 Future<void> init() async {
   sl.registerFactory(() => AuthenticationBloc(
-      verifyPhoneNumberUseCase: sl(), confirmVerificationUseCase: sl()));
+      verifyPhoneNumberUseCase: sl(),
+      confirmVerificationUseCase: sl(),
+      checkSignedInUseCase: sl()));
 
   sl.registerLazySingleton<AuthenticationRepository>(
       () => AuthenticationRepositoryImpl(remoteDataSource: sl()));
@@ -21,4 +24,5 @@ Future<void> init() async {
 
   sl.registerLazySingleton(() => VerifyPhoneNumberUseCase(sl()));
   sl.registerLazySingleton(() => ConfirmVerificationUseCase(sl()));
+  sl.registerLazySingleton(() => CheckSignedInUseCase(sl()));
 }

@@ -6,15 +6,15 @@ import 'package:mobile/modules/authentication/domain/repositories/authentication
 import 'package:mobile/modules/authentication/domain/usecases/phone_verification_confirmation_input.dart';
 
 class ConfirmVerificationUseCase
-    implements IUseCase<UserCredential, PhoneVerificationConfirmationInput> {
+    implements IUseCase<UserCredential, PhoneVerificationConfirmationRequest> {
   final AuthenticationRepository repository;
 
   ConfirmVerificationUseCase(this.repository);
 
   Future<Either<Failure, UserCredential>> execute(
-      PhoneVerificationConfirmationInput input) async {
+      PhoneVerificationConfirmationRequest request) async {
     return await this
         .repository
-        .confirmVerification(input.verificationId, input.smsCode);
+        .confirmVerification(request.verificationId, request.smsCode);
   }
 }
