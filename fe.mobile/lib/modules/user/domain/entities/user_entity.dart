@@ -1,7 +1,8 @@
 import 'package:equatable/equatable.dart';
+import 'package:mobile/modules/authentication/presentation/models/phone_info.dart';
 
 class UserEntity extends Equatable {
-  final String phoneNumber;
+  final PhoneInfo phoneInfo;
   final String? name;
   final String? email;
   final bool? isOnline;
@@ -9,7 +10,7 @@ class UserEntity extends Equatable {
   final String? profileUrl;
 
   UserEntity({
-    required this.phoneNumber,
+    required this.phoneInfo,
     this.name,
     this.email,
     this.isOnline,
@@ -18,5 +19,5 @@ class UserEntity extends Equatable {
   });
 
   @override
-  List<Object> get props => [phoneNumber];
+  List<Object> get props => [phoneInfo];
 }

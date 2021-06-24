@@ -9,7 +9,7 @@ abstract class AuthenticationRepository {
       PhoneVerificationFailed verificationFailed,
       PhoneCodeSent codeSent,
       PhoneCodeAutoRetrievalTimeout codeAutoRetrievalTimeout);
-  Future<Either<Failure, UserCredential>> confirmVerification(
+  Future<Either<Failure, User>> confirmVerification(
       String verificationId, String smsCode);
   Future<Either<Failure, void>> signOut();
   Future<Either<Failure, bool>> checkIsSignedIn();

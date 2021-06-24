@@ -26,11 +26,11 @@ class AuthenticationRepositoryImpl implements AuthenticationRepository {
   }
 
   @override
-  Future<Either<Failure, UserCredential>> confirmVerification(
-      String verificationId, String smsCode) async {
+  Future<Either<Failure, User>> confirmVerification(
+      String verificationId, String pinCode) async {
     return await this
         .remoteDataSource
-        .confirmVerification(verificationId, smsCode);
+        .confirmVerification(verificationId, pinCode);
   }
 
   @override

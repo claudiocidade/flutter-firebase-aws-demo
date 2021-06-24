@@ -1,41 +1,50 @@
-part of 'authentication_bloc.dart';
+import 'package:mobile/core/bloc/event.dart';
+import 'package:mobile/modules/authentication/presentation/models/phone_info.dart';
 
-abstract class AuthenticationEvent {}
-
-class OnPhoneVerificationRequested extends AuthenticationEvent {
-  final String phoneNumber;
-  OnPhoneVerificationRequested({required this.phoneNumber});
+abstract class PhoneAuthenticationEvent extends BlocEvent {
+  final PhoneInfo? phoneInfo;
+  PhoneAuthenticationEvent({this.phoneInfo, String? eventMessage}) 
+    : super(eventMessage: eventMessage);
 }
 
-class OnPhoneVerificationSubmitted extends AuthenticationEvent {
+abstract class PhoneVerificationEvent extends PhoneAuthenticationEvent {
   final String verificationId;
+  PhoneVerificationEvent({PhoneInfo? phoneInfo,required this.verificationId}) 
+    : super(phoneInfo: phoneInfo);
+}
+
+class OnVerifyPhoneNumber extends PhoneAuthenticationEvent {
+  OnVerifyPhoneNumber({required PhoneInfo phoneInfo})
+    : super(phoneInfo: phoneInfo);
+}
+
+class OnConfirmPhoneNumber extends PhoneVerificationEvent {
   final String smsCode;
-  OnPhoneVerificationSubmitted(
-      {required this.verificationId, required this.smsCode});
+  OnConfirmPhoneNumber({PhoneInfo? phoneInfo, required String verificationId, required this.smsCode})
+    : super(phoneInfo: phoneInfo, verificationId: verificationId);
 }
 
-class OnPhoneVerificationCompleted extends AuthenticationEvent {
-  final AuthCredential credential;
-  OnPhoneVerificationCompleted({required this.credential});
+class OnVerificationCodeSent extends PhoneVerificationEvent {
+  OnVerificationCodeSent({PhoneInfo? phoneInfo, required String verificationId}) 
+    : super(phoneInfo: phoneInfo, verificationId: verificationId);
 }
 
-class OnPhoneVerificationFailed extends AuthenticationEvent {
-  final String message;
-  OnPhoneVerificationFailed({required this.message});
+class OnVerificationFailed extends PhoneAuthenticationEvent {
+  OnVerificationFailed({required String eventMessage}) 
+    : super(eventMessage: eventMessage);
 }
 
-class OnPhoneVerificationCodeSent extends AuthenticationEvent {
-  final String verificationId;
-  final int? forceResendingToken;
-  OnPhoneVerificationCodeSent(
-      {required this.verificationId, required this.forceResendingToken});
+class OnVerificationCompleted extends PhoneAuthenticationEvent {
+  final String refreshToken;
+  OnVerificationCompleted({
+    required PhoneInfo phoneInfo, 
+    required this.refreshToken
+  }) : super(phoneInfo: phoneInfo);
 }
 
-class OnPhoneCodeAutoRetrievalTimeout extends AuthenticationEvent {
-  final String verificationId;
-  OnPhoneCodeAutoRetrievalTimeout({required this.verificationId});
+class OnVerificationAutoRetrievalTimeOut extends PhoneVerificationEvent {
+  OnVerificationAutoRetrievalTimeOut({ PhoneInfo? phoneInfo, required String verificationId }) 
+    : super(phoneInfo: phoneInfo, verificationId: verificationId);
 }
 
-class OnSignOutRequested extends AuthenticationEvent {
-  OnSignOutRequested();
-}
+class OnSignOutRequested extends PhoneAuthenticationEvent {}

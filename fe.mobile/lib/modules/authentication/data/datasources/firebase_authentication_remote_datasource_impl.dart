@@ -13,25 +13,28 @@ class FirebaseAuthRemoteDataSourceImpl
       PhoneCodeSent codeSent,
       PhoneCodeAutoRetrievalTimeout codeAutoRetrievalTimeout) async {
     if (FirebaseAuth.instance.currentUser != null) {}
-
-    return Right(await FirebaseAuth.instance.verifyPhoneNumber(
-        phoneNumber: phoneNumber,
-        timeout: Duration(seconds: 120), // TODO: Refactor
-        verificationCompleted: await verificationCompleted,
-        verificationFailed: await verificationFailed,
-        codeSent: await codeSent,
-        codeAutoRetrievalTimeout: await codeAutoRetrievalTimeout));
+    return Right(await FirebaseAuth
+      .instance
+      .verifyPhoneNumber(
+          phoneNumber: phoneNumber,
+          timeout: Duration(seconds: 120), // TODO: Refactor
+          verificationCompleted: verificationCompleted,
+          verificationFailed: verificationFailed,
+          codeSent: codeSent,
+          codeAutoRetrievalTimeout: codeAutoRetrievalTimeout));
   }
 
-  Future<Either<Failure, UserCredential>> confirmVerification(
+  Future<Either<Failure, User>> confirmVerification(
       String verificationId, String smsCode) async {
     try {
-      final credential = await PhoneAuthProvider.credential(
+      final credential = PhoneAuthProvider.credential(
           verificationId: verificationId, smsCode: smsCode);
-      return Right(
-          await FirebaseAuth.instance.signInWithCredential(credential));
+      final firebaseUser = await await FirebaseAuth.instance
+          .signInWithCredential(credential);
+      return Right(firebaseUser.user);
     } on FirebaseAuthException catch (e) {
-      return Left(UnhandledAuthenticationFailure(exception: e));
+      return Left(
+          UnhandledAuthenticationFailure(exception: e));
     }
   }
 
@@ -46,7 +49,8 @@ class FirebaseAuthRemoteDataSourceImpl
           ? Right(true)
           : Right(false);
     } on FirebaseAuthException catch (e) {
-      return Left(UnhandledAuthenticationFailure(exception: e));
+      return Left(
+          UnhandledAuthenticationFailure(exception: e));
     }
   }
 }
