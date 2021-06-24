@@ -61,10 +61,12 @@ class AuthenticationBloc
     }
 
     if (event is OnVerificationCodeSent)
-      yield WaitingVerificationPinCodeState(verificationId: event.verificationId);
+      yield WaitingVerificationPinCodeState(
+        phoneInfo: event.phoneInfo,
+        verificationId: event.verificationId);
 
     if (event is OnVerificationCompleted)
-      yield SignedInState(currentUser: 
+      yield SignedInState(currentUser:
         UserEntity(phoneInfo: event.phoneInfo!));
 
     if (event is OnSignOutRequested)
@@ -93,13 +95,13 @@ class AuthenticationBloc
     final PhoneCodeSent codeSent =
       (String verificationId, int? forceResendingToken) =>
         add(OnVerificationCodeSent(
-          phoneInfo: state.phoneInfo, 
+          phoneInfo: phoneInfo,
           verificationId: verificationId));
 
     final PhoneCodeAutoRetrievalTimeout codeAutoRetrievalTimeout =
       (String verificationId) =>
         add(OnVerificationAutoRetrievalTimeOut(
-          phoneInfo: state.phoneInfo, 
+          phoneInfo: phoneInfo,
           verificationId: verificationId));
 
     return PhoneVerificationRequest(

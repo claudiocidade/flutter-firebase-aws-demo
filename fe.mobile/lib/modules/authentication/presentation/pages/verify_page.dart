@@ -42,6 +42,7 @@ class _VerifyPageState extends State<VerifyPage> {
                 BlocProvider
                   .of<AuthenticationBloc>(context)
                   .add(OnConfirmPhoneNumber(
+                    phoneInfo: state.phoneInfo,
                     verificationId: state.verificationId, 
                     smsCode: this.smsCode!));
               }),
