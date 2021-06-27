@@ -1,0 +1,367 @@
+
+AWSTemplateFormatVersion: '2010-09-09'
+Description: mobile Cloud Architecture
+Resources:
+  ##############################################
+  ##                 COGNITO                  ##
+  ##############################################
+  # DeploymentBucket:
+  #   Type: AWS::S3::Bucket
+  #   Properties: 
+  #     BucketName: mobile-deployment-dev
+  #     ObjectLockEnabled: False
+  #     PublicAccessBlockConfiguration: 
+  #       BlockPublicAcls: True
+  #       BlockPublicPolicy: True
+  #       IgnorePublicAcls: True
+  #       RestrictPublicBuckets: True
+  #     VersioningConfiguration: 
+  #       Status: Suspended
+  ##############################################
+  ##                 COGNITO                  ##
+  ##############################################
+  UserPool:
+    Type: AWS::Cognito::UserPool
+    Properties: 
+      UserPoolName: mobile-user-pool
+      AdminCreateUserConfig: 
+        AllowAdminCreateUserOnly: False
+      EmailConfiguration: 
+        EmailSendingAccount: COGNITO_DEFAULT
+      Schema: 
+        - Name: phone_number
+          AttributeDataType: String
+          Mutable: false
+          Required: true
+      UsernameAttributes: 
+        - "phone_number"
+      UsernameConfiguration: 
+        CaseSensitive: False
+      UserPoolAddOns: 
+        AdvancedSecurityMode: "OFF"
+      DeviceConfiguration:
+        ChallengeRequiredOnNewDevice: True
+        DeviceOnlyRememberedOnUserPrompt: False
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 6
+          RequireLowercase: False
+          RequireNumbers: False
+          RequireSymbols: False
+          RequireUppercase: False
+          TemporaryPasswordValidityDays: 3
+
+  # Creates a User Pool Client to be used by the identity pool
+  UserPoolClient:
+    Type: "AWS::Cognito::UserPoolClient"
+    Properties:
+      ClientName: mobile-pool-client
+      GenerateSecret: False
+      UserPoolId: !Ref UserPool
+      ExplicitAuthFlows:
+        - "ALLOW_CUSTOM_AUTH"
+        - "ALLOW_REFRESH_TOKEN_AUTH"
+  
+  # Creates a federeated Identity pool so the client can invoke
+  # AWS APIs used to interact with AWS directly.
+  IdentityPool:
+    Type: "AWS::Cognito::IdentityPool"
+    Properties:
+      IdentityPoolName: mobile-identity-pool
+      AllowUnauthenticatedIdentities: true
+      CognitoIdentityProviders: 
+        - ClientId: !Ref UserPoolClient
+          ProviderName: !GetAtt UserPool.ProviderName
+
+  # Create a role for very limited unauthorized acces to AWS resources. 
+  CognitoUnAuthorizedRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument: 
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal: 
+              Federated: "cognito-identity.amazonaws.com"
+            Action: 
+              - "sts:AssumeRoleWithWebIdentity"
+            Condition:
+              StringEquals: 
+                "cognito-identity.amazonaws.com:aud": !Ref IdentityPool
+              "ForAnyValue:StringLike":
+                "cognito-identity.amazonaws.com:amr": unauthenticated
+      Policies:
+        - PolicyName: "CognitoUnauthorizedPolicy"
+          PolicyDocument: 
+            Version: "2012-10-17"
+            Statement: 
+              - Effect: "Allow"
+                Action:
+                  - "mobileanalytics:PutEvents"
+                  - "cognito-sync:*"
+                Resource: "*"
+
+  # Create a role for authorized access to AWS resources. 
+  # Control what users from the Identity Pool can access. 
+  CognitoAuthorizedRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument: 
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal: 
+              Federated: "cognito-identity.amazonaws.com"
+            Action: 
+              - "sts:AssumeRoleWithWebIdentity"
+            Condition:
+              StringEquals: 
+                "cognito-identity.amazonaws.com:aud": !Ref IdentityPool
+              "ForAnyValue:StringLike":
+                "cognito-identity.amazonaws.com:amr": authenticated
+      Policies:
+        - PolicyName: "CognitoAuthorizedPolicy"
+          PolicyDocument: 
+            Version: "2012-10-17"
+            Statement: 
+              - Effect: "Allow"
+                Action:
+                  - "mobileanalytics:PutEvents"
+                  - "cognito-sync:*"
+                  - "cognito-identity:*"
+                Resource: "*"
+              - Effect: "Allow"
+                Action:
+                  - "lambda:InvokeFunction"
+                Resource: "*"
+
+  ##############################################
+  ##                API GATEWAY               ##
+  ##############################################
+  HttpApi:
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      Name: mobile-api
+      ProtocolType: HTTP
+  HttpApiStage:
+    Type: AWS::ApiGatewayV2::Stage
+    Properties:
+      ApiId: !Ref HttpApi
+      AutoDeploy: true
+      StageName: $default
+  HttpApiAuthorizer:
+    Type: AWS::ApiGatewayV2::Authorizer
+    Properties:
+      ApiId: !Ref HttpApi
+      AuthorizerType: JWT
+      IdentitySource:
+        - "$request.header.Authorization"
+      JwtConfiguration:
+        Audience:
+          - mobile-user-pool
+        Issuer: !Sub "https://cognito-idp.${AWS::Region}.amazonaws.com/${UserPool}"
+        # Issuer: "https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com"
+      Name: JwtAuthorizer
+  NotificationsHttpApiRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref HttpApi
+      AuthorizationType: JWT
+      AuthorizerId: !Ref HttpApiAuthorizer
+      RouteKey: GET /notifications
+      Target: !Sub "integrations/${NotificationsHttpApiIntegration}"
+  ProfilesHttpApiRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref HttpApi
+      AuthorizationType: JWT
+      AuthorizerId: !Ref HttpApiAuthorizer
+      RouteKey: GET /profiles
+      Target: !Sub "integrations/${NotificationsHttpApiIntegration}"
+  NotificationsHttpApiIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref HttpApi
+      # IntegrationMethod: ANY
+      IntegrationType: AWS_PROXY
+      IntegrationSubtype: EventBridge-PutEvents
+      CredentialsArn: !GetAtt HttpApiIntegrationEventBridgeRole.Arn
+      PayloadFormatVersion: "1.0"
+      RequestParameters:
+        Time: $request.body.event_time
+        Source: 'source.events'
+        DetailType: $request.body.event_type
+        Detail: $request.body
+        EventBusName: !GetAtt EventBus.Arn
+      # IntegrationUri: !Ref EventBus
+
+  EventBus:
+    Type: AWS::Events::EventBus
+    Properties:
+      Name: mobile-event-bus
+  
+  HttpApiIntegrationEventBridgeRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${EventBus}-integration-policy
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - apigateway.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Policies:
+        - PolicyName: !Sub ${EventBus}-integration-policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: 'events:*'
+                Resource: !GetAtt EventBus.Arn
+
+  ProfilesTable:
+    Type: AWS::DynamoDB::Table
+    Properties: 
+      TableName: profiles
+      AttributeDefinitions: 
+        - AttributeName: "phone_number"
+          AttributeType: "S" # {phone_number}
+        # - AttributeName: "name"
+        #   AttributeType: "S" # Customized display name selected by the user.
+        # - AttributeName: "latitude"
+        #   AttributeType: "N" # Largest precision (+-)##.######## 
+        # - AttributeName: "longitude"
+        #   AttributeType: "N" # Largest precision (+-)##.######## 
+        # - AttributeName: "createdAt" # Record TTL (15 Minutes)
+        #   AttributeType: "S" # ISO 86#1 Date. i.e: 2#15-12-21T17:42:34Z (UTC)
+      BillingMode: PAY_PER_REQUEST
+      ContributorInsightsSpecification: 
+        Enabled: False
+      KeySchema: 
+        - AttributeName: "phone_number"
+          KeyType: "HASH"
+        
+  NotificationsTable:
+    Type: AWS::DynamoDB::Table
+    Properties: 
+      TableName: notifications
+      AttributeDefinitions: 
+        - AttributeName: "id"
+          AttributeType: "S" # {userID}#{LA}#{LO}#{when}#{type}
+        - AttributeName: "when"
+          AttributeType: "S" # ISO 86#1 Date. i.e: 2#15-12-21T17:42:34Z (UTC)
+        # - AttributeName: "type"
+        #   AttributeType: "S" # SHARE | INVITE | ALERT | ALARM
+        # - AttributeName: "notifierID"
+        #   AttributeType: "S" # Notifier userID (phone number)
+        # - AttributeName: "latitude"
+        #   AttributeType: "N" # Largest precision (+-)##.######## 
+        # - AttributeName: "longitude"
+        #   AttributeType: "N" # Largest precision (+-)##.######## 
+        # - AttributeName: "expiresAt" # Record TTL (15 Minutes)
+        #   AttributeType: "S" # ISO 86#1 Date. i.e: 2#15-12-21T17:42:34Z (UTC)
+      BillingMode: PAY_PER_REQUEST
+      ContributorInsightsSpecification: 
+        Enabled: False
+      KeySchema: 
+        - AttributeName: "id"
+          KeyType: "HASH"
+        - AttributeName: "when"
+          KeyType: "RANGE"
+      StreamSpecification: 
+        StreamViewType: NEW_AND_OLD_IMAGES
+      TimeToLiveSpecification: 
+        AttributeName: "expiresAt"
+        Enabled: True
+
+  NotificationSeverityHandlingStateMachine:
+    Type: 'AWS::StepFunctions::StateMachine'
+    Properties:
+      RoleArn: !GetAtt
+        - StateMachineRole
+        - Arn
+      TracingConfiguration:
+        Enabled: true
+      Definition:
+        Comment: Handles the Notifications dispatched by a User
+        StartAt: DetectNotificationType
+        States:
+          DetectNotificationType:
+            Type: Choice
+            Choices: 
+            - Variable: $.type
+              StringEquals: SHARE
+              Next: HandleShareNotification
+            - Variable: $.type
+              StringEquals: INVITE
+              Next: HandleShareNotification
+            - Variable: $.type
+              StringEquals: ALERT
+              Next: HandleShareNotification
+            - Variable: $.type
+              StringEquals: ALARM
+              Next: HandleShareNotification
+
+          HandleShareNotification:
+            Type: Task
+            Resource: Sub! FunctionName.Arn
+            Next: Complete
+          HandleInviteNotification:
+            Type: Task
+            Resource: Ref! FunctionName
+            Next: Complete
+          HandleAlertNotification:
+            Type: Task
+            Resource: Sub! FunctionName.Arn
+            Next: Complete
+          HandleAlarmNotification:
+            Type: Task
+            Resource: Sub! FunctionName.Arn
+            Next: Complete
+
+          Complete:
+            Type: Pass
+            End: true
+
+  StateMachineRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Action:
+              - 'sts:AssumeRole'
+            Effect: Allow
+            Principal:
+              Service:
+                - states.amazonaws.com
+      ManagedPolicyArns: []
+      Policies:
+        - PolicyName: StateMachineRolePolicy
+          PolicyDocument:
+            Statement:
+              - Action:
+                  - 'lambda:InvokeFunction'
+                Resource: "*"
+                Effect: Allow
+
+Outputs:
+  UserPoolId:
+    Value: !Ref UserPool
+    Export:
+      Name: "UserPool::Id"
+  UserPoolClientId:
+    Value: !Ref UserPoolClient
+    Export:
+      Name: "UserPoolClient::Id"
+  IdentityPoolId:
+    Value: !Ref IdentityPool
+    Export:
+      Name: "IdentityPool::Id"
+  StateMachineArn:
+    Value: !GetAtt NotificationSeverityHandlingStateMachine.Arn
+    Export:
+      Name: "NotificationSeverityHandlingStateMachine::Arn"

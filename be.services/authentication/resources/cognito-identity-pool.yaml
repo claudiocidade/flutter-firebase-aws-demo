@@ -1,0 +1,10 @@
+  # Creates a federeated Identity pool so the client can invoke
+  # AWS APIs used to interact with AWS directly.
+  IdentityPool:
+    Type: "AWS::Cognito::IdentityPool"
+    Properties:
+      IdentityPoolName: mobile-identity-pool
+      AllowUnauthenticatedIdentities: true
+      CognitoIdentityProviders: 
+        - ClientId: !Ref UserPoolClient
+          ProviderName: !GetAtt UserPool.ProviderName

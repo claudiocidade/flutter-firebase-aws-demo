@@ -1,0 +1,77 @@
+Type: AWS::StepFunctions::StateMachine
+Properties: 
+  Definition: 
+    Definition
+  DefinitionS3Location: 
+    S3Location
+  DefinitionString: 
+    String
+  DefinitionSubstitutions: 
+    Key : Value
+  LoggingConfiguration: 
+    LoggingConfiguration
+  RoleArn: String
+  StateMachineName: String
+  StateMachineType: String
+  Tags: 
+    - TagsEntry
+  TracingConfiguration: 
+    TracingConfiguration
+
+ 
+  "Comment": "An example of the Amazon States Language using a choice state.",
+
+  "StartAt": "DetectNotificationType",
+  "States": {
+    "DetectNotificationType": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.foo",
+          "NumericEquals": 1,
+          "Next": "ShareNotification"
+        },
+        {
+          "Variable": "$.foo",
+          "NumericEquals": 2,
+          "Next": "InviteNotification"
+        },
+        {
+          "Variable": "$.foo",
+          "NumericEquals": 3,
+          "Next": "AlertNotification"
+        },
+        {
+          "Variable": "$.foo",
+          "NumericEquals": 4,
+          "Next": "AlarmNotification"
+        }
+      ]
+    },
+    "ShareNotification": {
+      "Type": "Task",
+      "Resource": "arn:aws:lambda:REGION:ACCOUNT_ID:function:OnFirstMatch",
+      "Next": "S3Backup"
+    },
+    "InviteNotification": {
+      "Type": "Task",
+      "Resource": "arn:aws:lambda:REGION:ACCOUNT_ID:function:OnFirstMatch",
+      "Next": "S3Backup"
+    },
+    "AlertNotification": {
+      "Type": "Task",
+      "Resource": "arn:aws:lambda:REGION:ACCOUNT_ID:function:OnSecondMatch",
+      "Next": "S3Backup"
+    },
+    "AlarmNotification": {
+      "Type": "Task",
+      "Resource": "arn:aws:lambda:REGION:ACCOUNT_ID:function:OnSecondMatch",
+      "Next": "S3Backup"
+    },
+    "S3Backup": {
+      "Type": "Task",
+      "Resource": "arn:aws:lambda:REGION:ACCOUNT_ID:function:FUNCTION_NAME",
+      "End": true
+    }
+  }
+}

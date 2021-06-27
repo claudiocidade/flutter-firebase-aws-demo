@@ -1,0 +1,36 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Cognito Stack
+
+Resources:
+  NotificationsTable:
+    Type: AWS::DynamoDB::Table
+    Properties: 
+      TableName: notifications
+      AttributeDefinitions: 
+        - AttributeName: "id"
+          AttributeType: "S" # {userID}#{LA}#{LO}#{when}#{type}
+        - AttributeName: "when"
+          AttributeType: "S" # ISO 86#1 Date. i.e: 2#15-12-21T17:42:34Z (UTC)
+        # - AttributeName: "type"
+        #   AttributeType: "S" # SHARE | INVITE | ALERT | ALARM
+        # - AttributeName: "notifierID"
+        #   AttributeType: "S" # Notifier userID (phone number)
+        # - AttributeName: "latitude"
+        #   AttributeType: "N" # Largest precision (+-)##.######## 
+        # - AttributeName: "longitude"
+        #   AttributeType: "N" # Largest precision (+-)##.######## 
+        # - AttributeName: "expiresAt" # Record TTL (15 Minutes)
+        #   AttributeType: "S" # ISO 86#1 Date. i.e: 2#15-12-21T17:42:34Z (UTC)
+      BillingMode: PAY_PER_REQUEST
+      ContributorInsightsSpecification: 
+        Enabled: False
+      KeySchema: 
+        - AttributeName: "id"
+          KeyType: "HASH"
+        - AttributeName: "when"
+          KeyType: "RANGE"
+      StreamSpecification: 
+        StreamViewType: NEW_AND_OLD_IMAGES
+      TimeToLiveSpecification: 
+        AttributeName: "expiresAt"
+        Enabled: True

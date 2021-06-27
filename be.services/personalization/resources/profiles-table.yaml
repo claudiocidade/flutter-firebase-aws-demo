@@ -1,0 +1,25 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Cognito Stack
+
+Resources:
+  ProfilesTable:
+    Type: AWS::DynamoDB::Table
+    Properties: 
+      TableName: profiles
+      AttributeDefinitions: 
+        - AttributeName: "phone_number"
+          AttributeType: "S" # {phone_number}
+        # - AttributeName: "name"
+        #   AttributeType: "S" # Customized display name selected by the user.
+        # - AttributeName: "latitude"
+        #   AttributeType: "N" # Largest precision (+-)##.######## 
+        # - AttributeName: "longitude"
+        #   AttributeType: "N" # Largest precision (+-)##.######## 
+        # - AttributeName: "createdAt" # Record TTL (15 Minutes)
+        #   AttributeType: "S" # ISO 86#1 Date. i.e: 2#15-12-21T17:42:34Z (UTC)
+      BillingMode: PAY_PER_REQUEST
+      ContributorInsightsSpecification: 
+        Enabled: False
+      KeySchema: 
+        - AttributeName: "phone_number"
+          KeyType: "HASH"
