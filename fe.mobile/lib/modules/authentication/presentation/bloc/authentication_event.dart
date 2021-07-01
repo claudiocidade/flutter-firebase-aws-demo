@@ -47,4 +47,7 @@ class OnVerificationAutoRetrievalTimeOut extends PhoneVerificationEvent {
     : super(phoneInfo: phoneInfo, verificationId: verificationId);
 }
 
-class OnSignOutRequested extends PhoneAuthenticationEvent {}
+class OnSignOutRequested extends PhoneAuthenticationEvent {
+  OnSignOutRequested({PhoneInfo? phoneInfo}) 
+  : super(phoneInfo: phoneInfo);
+}

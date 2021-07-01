@@ -40,9 +40,12 @@ class MainDrawer extends StatelessWidget {
         ListTile(
           leading: Icon(Icons.logout),
           title: Text('Log out'),
-          onTap: () =>
-            BlocProvider.of<AuthenticationBloc>(context).add(OnSignOutRequested()),
-        )
+          onTap: () {
+            final provider = BlocProvider
+              .of<AuthenticationBloc>(context);
+            final phoneInfo = provider.state.phoneInfo;
+            provider.add(OnSignOutRequested(phoneInfo: phoneInfo));
+          })
       ]),
     ));
   }

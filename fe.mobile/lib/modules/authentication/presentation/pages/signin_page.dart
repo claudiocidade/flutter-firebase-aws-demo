@@ -18,6 +18,17 @@ class _SignInPageState extends State<SignInPage> {
   String? _phoneNumber;                 
   String? _selectedCountryIsoCode = "US";
   String? _selectedCountryDialCode = "+1";
+
+  @override
+  void initState() {
+    super.initState();
+    final state = this.context.read<AuthenticationBloc>().state;
+    if (state.phoneInfo != null) {
+      this._phoneNumber = state.phoneInfo!.dialNumber;
+      this._selectedCountryDialCode = state.phoneInfo!.dialCode;
+      this._selectedCountryIsoCode = state.phoneInfo!.dialCode;
+    }
+  }
   
   @override
   Widget build(BuildContext context) {
@@ -49,6 +60,7 @@ class _SignInPageState extends State<SignInPage> {
                   decoration: InputDecoration(labelText: this._defaultPhoneNumberLabelText),
                   keyboardType: TextInputType.phone,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  initialValue: this._phoneNumber,
                   onChanged: (value) {
                     setState(() {
                       this._phoneNumber = value;

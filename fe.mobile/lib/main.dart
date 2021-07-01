@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:mobile/modules/user/presentation/pages/home_page.dart';
 import 'package:mobile/modules/authentication/presentation/authentication_screen.dart';
 import 'package:mobile/modules/authentication/presentation/bloc/authentication_bloc.dart';
 import 'package:mobile/modules/authentication/presentation/bloc/authentication_state.dart';
+import 'package:mobile/modules/user/user_screen.dart';
 
 import 'dependency_injection.dart' as di;
 
@@ -26,7 +26,7 @@ class Main extends StatelessWidget {
       home: BlocBuilder<AuthenticationBloc, AuthenticationState>(
         builder: (context, state) {
         if (state is SignedInState)
-          return HomePage();
+          return UserScreen();
         return AuthenticationScreen();
       })));
 }

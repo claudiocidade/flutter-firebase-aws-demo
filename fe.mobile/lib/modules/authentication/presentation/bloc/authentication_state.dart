@@ -3,18 +3,18 @@ import 'package:mobile/modules/authentication/presentation/models/phone_info.dar
 
 abstract class AuthenticationState {
   final PhoneInfo? phoneInfo;
-  AuthenticationState({this.phoneInfo});
+  final String? message;
+  AuthenticationState({this.phoneInfo, this.message});
 }
 
 abstract class AuthenticationFailedState extends AuthenticationState {
-  final String message;
-  AuthenticationFailedState({PhoneInfo? phoneInfo, required this.message})
-    : super(phoneInfo: phoneInfo);
+  AuthenticationFailedState({PhoneInfo? phoneInfo, required String message})
+    : super(phoneInfo: phoneInfo, message: message);
 }
 
-class SignedOutState extends AuthenticationFailedState {
-  SignedOutState({PhoneInfo? phoneInfo, String message = ""}) 
-    : super(phoneInfo: phoneInfo, message: message);
+class SignedOutState extends AuthenticationState {
+  SignedOutState({PhoneInfo? phoneInfo}) 
+    : super(phoneInfo: phoneInfo);
 }
 
 class SignInFailedState extends AuthenticationFailedState {

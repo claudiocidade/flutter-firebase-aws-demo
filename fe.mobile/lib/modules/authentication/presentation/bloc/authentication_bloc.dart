@@ -57,7 +57,7 @@ class AuthenticationBloc
 
     if (event is OnVerificationFailed) {
       print(event.eventMessage);
-      yield SignedOutState(phoneInfo: event.phoneInfo, message: event.eventMessage ?? "");
+      yield SignedOutState(phoneInfo: event.phoneInfo);
     }
 
     if (event is OnVerificationCodeSent)
@@ -70,7 +70,7 @@ class AuthenticationBloc
         UserEntity(phoneInfo: event.phoneInfo!));
 
     if (event is OnSignOutRequested)
-      yield SignedOutState(phoneInfo: event.phoneInfo, );
+      yield SignedOutState(phoneInfo: event.phoneInfo);
   }
 
   PhoneVerificationRequest _createPhoneVerificationInput({required PhoneInfo phoneInfo}) {
